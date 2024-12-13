@@ -1,0 +1,16 @@
+{
+    "name": "Scraper",
+    "dockerComposeFile": ["../docker-compose.yml"],
+    "service": "scraper",
+    "workspaceFolder": "/workspace",
+    "shutdownAction": "stopCompose",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go",
+                "ms-vscode.makefile-tools",
+                "tamasfe.even-better-toml"
+            ]
+        }
+    }
+}
