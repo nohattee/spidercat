@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"log"
 
 	"scraper/internal/config"
 	"scraper/internal/domain/source"
@@ -34,12 +35,48 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 		})
 
 		c.OnHTML(parser.Item(), func(e *colly.HTMLElement) {
-			id := e.ChildText(parser.ID())
-			name := e.ChildText(parser.Name())
-			tags := e.ChildTexts(parser.Tags())
-			categories := e.ChildTexts(parser.Categories())
-			authors := e.ChildTexts(parser.Authors())
+			var err error
 
+			tagsName := e.ChildTexts(parser.Tags())
+			tags := make(tag.Tag, len(tagsName))
+			for i := range tagsName {
+				tags[i] = tag.New(tagsName[i])
+			}
+			err = uc.repo.Tag.Upsert(ctx, tags)
+			if err != nil {
+				log.Printf("cannot upsert tags: %v", err)
+			}
+
+			categoriesName := e.ChildTexts(parser.Categories())
+			categories := make(category.Tag, len(categoriesName))
+			for i := range categoriesName {
+				categories[i] = category.New(categoriesName[i])
+			}
+			err = uc.repo.Category.Upsert(ctx, categories)
+			if err != nil {
+				log.Printf("cannot upsert tags: %v", err)
+			}
+
+			authorsName := e.ChildTexts(parser.Authors())
+			authors := make(author.Author, len(authorsName))
+			for i := range authorsName {
+				authors[i] = author.New(authorsName[i])
+			}
+			err = uc.repo.Author.Upsert(ctx, authors)
+			if err != nil {
+				log.Printf("cannot upsert authors: %v", err)
+			}
+
+			externalID := e.ChildText(parser.ID())
+			name := e.ChildText(parser.Name())
+
+			// TODO: handle images
+
+			item := item.New(externalID, name, url, categories, authors, tags)
+			err = uc.repo.Item.Upsert(ctx, item)
+			if err != nil {
+				log.Printf("cannot upsert item: %v", err)
+			}
 		})
 
 		c.OnHTML(parser.Paginator(), func(e *colly.HTMLElement) {

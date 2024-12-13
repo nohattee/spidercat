@@ -77,6 +77,18 @@ func (p *parser) Items() string {
 	return p.items
 }
 
+func (p *parser) Tags() string {
+	return p.tags
+}
+
+func (p *parser) Categories() string {
+	return p.categories
+}
+
+func (p *parser) Authors() string {
+	return p.authors
+}
+
 func Parse(rawURL string) (*Source, error) {
 	var source *Source
 	url, err := url.Parse(rawURL)
