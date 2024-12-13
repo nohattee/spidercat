@@ -1,5 +1,6 @@
 services:
   scraper:
+    container_name: scraper
     build:
       dockerfile: scraper/Dockerfile
     environment:
@@ -59,7 +60,7 @@ services:
       - ES_VERSION=v7
     image: temporalio/auto-setup:${TEMPORAL_VERSION}
     ports:
-      - 7233:7233
+      - ${PORT_PREFIX}7233:7233
     restart: unless-stopped
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
@@ -86,4 +87,4 @@ services:
     image: temporalio/ui:${TEMPORAL_UI_VERSION}
     restart: unless-stopped
     ports:
-      - 8080:8080
+      - ${PORT_PREFIX}8080:8080

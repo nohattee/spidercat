@@ -1,4 +1,4 @@
-ARG VERSION=1.23
+ARG VERSION=1.23.4
 FROM golang:${VERSION}-alpine
 
 RUN set -ex; \
