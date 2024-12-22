@@ -2,28 +2,46 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"log"
 
-	"scraper/internal/config"
-	"scraper/internal/domain/source"
+	"github.com/nohattee/spidercat/src/scraper/internal/domain/author"
+	"github.com/nohattee/spidercat/src/scraper/internal/domain/category"
+	"github.com/nohattee/spidercat/src/scraper/internal/domain/item"
+	"github.com/nohattee/spidercat/src/scraper/internal/domain/source"
+	"github.com/nohattee/spidercat/src/scraper/internal/domain/tag"
 
 	"github.com/gocolly/colly/v2"
 )
 
 type UseCase struct {
+	tagRepo      tag.Repository
+	categoryRepo category.Repository
+	authorRepo   author.Repository
+	itemRepo     item.Repository
 }
 
-func New(cfg config.Config) *UseCase {
-	return &UseCase{}
+func New(itemRepo item.Repository, categoryRepo category.Repository, authorRepo author.Repository, tagRepo tag.Repository) *UseCase {
+	return &UseCase{
+		itemRepo:     itemRepo,
+		categoryRepo: categoryRepo,
+		authorRepo:   authorRepo,
+		tagRepo:      tagRepo,
+	}
 }
 
 func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
+	mapSourceByURL := map[string]*source.Source{}
 	for _, url := range urls {
 		s, err := source.Parse(url)
 		if err != nil {
 			return err
 		}
+		mapSourceByURL[url] = s
+	}
 
+	for _, url := range urls {
+		s := mapSourceByURL[url]
 		parser := s.HTMLParser()
 
 		c := colly.NewCollector()
@@ -31,60 +49,53 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 
 		c.OnHTML(parser.Items(), func(e *colly.HTMLElement) {
 			itemURL := e.Request.AbsoluteURL(e.Attr("href"))
-			itemCollector.Visit(itemURL)
+			err := itemCollector.Visit(itemURL)
+			if err != nil {
+				log.Println(err)
+			}
+			panic("asd")
 		})
 
-		c.OnHTML(parser.Item(), func(e *colly.HTMLElement) {
+		itemCollector.OnHTML(parser.Item(), func(e *colly.HTMLElement) {
 			var err error
 
-			tagsName := e.ChildTexts(parser.Tags())
-			tags := make(tag.Tag, len(tagsName))
-			for i := range tagsName {
-				tags[i] = tag.New(tagsName[i])
-			}
-			err = uc.repo.Tag.Upsert(ctx, tags)
+			tagNames := e.ChildTexts(parser.Tags())
+			tags, err := uc.tagRepo.GetOrCreateByNames(ctx, tagNames)
 			if err != nil {
-				log.Printf("cannot upsert tags: %v", err)
+				log.Printf("cannot get_or_create_by_names tags: %v", err)
 			}
 
-			categoriesName := e.ChildTexts(parser.Categories())
-			categories := make(category.Tag, len(categoriesName))
-			for i := range categoriesName {
-				categories[i] = category.New(categoriesName[i])
-			}
-			err = uc.repo.Category.Upsert(ctx, categories)
+			categoryNames := e.ChildTexts(parser.Categories())
+			categories, err := uc.categoryRepo.GetOrCreateByNames(ctx, categoryNames)
 			if err != nil {
-				log.Printf("cannot upsert tags: %v", err)
+				log.Printf("cannot get_or_create_by_names categories: %v", err)
 			}
 
-			authorsName := e.ChildTexts(parser.Authors())
-			authors := make(author.Author, len(authorsName))
-			for i := range authorsName {
-				authors[i] = author.New(authorsName[i])
-			}
-			err = uc.repo.Author.Upsert(ctx, authors)
+			authorNames := e.ChildTexts(parser.Authors())
+			authors, err := uc.authorRepo.GetOrCreateByNames(ctx, authorNames)
 			if err != nil {
-				log.Printf("cannot upsert authors: %v", err)
+				log.Printf("cannot get_or_create_by_names authors: %v", err)
 			}
-
-			externalID := e.ChildText(parser.ID())
-			name := e.ChildText(parser.Name())
 
 			// TODO: handle images
 
-			item := item.New(externalID, name, url, categories, authors, tags)
-			err = uc.repo.Item.Upsert(ctx, item)
+			externalID := e.ChildText(parser.ID())
+			name := e.ChildText(parser.Name())
+			itemAggregate := item.NewAggregate(item.New(externalID, name), authors, categories, tags)
+			err = uc.itemRepo.UpsertByExternalID(ctx, itemAggregate)
 			if err != nil {
 				log.Printf("cannot upsert item: %v", err)
 			}
 		})
 
-		c.OnHTML(parser.Paginator(), func(e *colly.HTMLElement) {
-			link := e.Attr("href")
-			e.Request.Visit(link)
+		// c.OnHTML(parser.Paginator(), func(e *colly.HTMLElement) {
+		// 	link := e.Attr("href")
+		// 	e.Request.Visit(link)
+		// })
+		c.OnRequest(func(r *colly.Request) {
+			fmt.Println("Visiting", r.URL.String())
 		})
-
-		c.Visit(s.URL())
+		c.Visit(url)
 	}
 
 	return nil
