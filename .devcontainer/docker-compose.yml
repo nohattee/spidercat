@@ -12,7 +12,7 @@ services:
     tty: true
     restart: unless-stopped
     volumes:
-      - ../src/scraper:/workspace:cached
+      - ../:/workspace:cached
 
   elasticsearch:
     container_name: temporal-elasticsearch
@@ -32,10 +32,10 @@ services:
       - /var/lib/elasticsearch/data
 
   postgresql:
-    container_name: temporal-postgresql
+    container_name: postgresql
     environment:
-      POSTGRES_PASSWORD: temporal
-      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: spidercat
+      POSTGRES_USER: spidercat
     image: postgres:${POSTGRESQL_VERSION}
     expose:
       - 5432
