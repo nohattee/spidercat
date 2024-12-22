@@ -26,6 +26,7 @@ var (
 		images:     "",
 		thumbnail:  "",
 		paginator:  "",
+		chapters:   "",
 		items:      "#main_homepage > div.list_grid_out > ul > li > div.book_avatar > a",
 	}}
 )
@@ -38,8 +39,6 @@ const (
 type Source struct {
 	domain     string
 	htmlParser *parser
-	jsonParser *parser
-	url        string
 }
 
 func (s *Source) HTMLParser() *parser {
@@ -48,10 +47,6 @@ func (s *Source) HTMLParser() *parser {
 
 func (s *Source) Domain() string {
 	return s.domain
-}
-
-func (s *Source) URL() string {
-	return s.url
 }
 
 type parser struct {
@@ -65,6 +60,7 @@ type parser struct {
 	paginator  string
 	item       string
 	items      string
+	chapters   string
 }
 
 func (p *parser) ID() string {
