@@ -95,6 +95,10 @@ func (p *parser) Authors() string {
 	return p.authors
 }
 
+func (p *parser) Chapters() string {
+	return p.chapters
+}
+
 func Parse(rawURL string) (*Source, error) {
 	var source *Source
 	url, err := url.Parse(rawURL)
