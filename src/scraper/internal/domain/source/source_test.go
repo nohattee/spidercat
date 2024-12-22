@@ -3,7 +3,7 @@ package source_test
 import (
 	"testing"
 
-	"scraper/internal/domain/source"
+	"github.com/nohattee/spidercat/src/scraper/internal/domain/source"
 
 	"github.com/stretchr/testify/assert"
 )

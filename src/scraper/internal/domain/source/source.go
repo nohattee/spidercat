@@ -2,13 +2,12 @@ package source
 
 import (
 	"fmt"
-	"net/mail"
 	"net/url"
 	"strings"
 )
 
 var (
-	GoogleSource = &Source{domain: GoogleDomain, htmlParser: &parser{
+	Google = &Source{domain: GoogleDomain, htmlParser: &parser{
 		id:         "",
 		name:       "",
 		categories: "",
@@ -17,12 +16,23 @@ var (
 		images:     "",
 		thumbnail:  "",
 		paginator:  "",
-		items:      "",
+	}}
+	TruyenQQT = &Source{domain: TruyenQQTDomain, htmlParser: &parser{
+		id:         "",
+		name:       "",
+		categories: "",
+		tags:       "",
+		authors:    "",
+		images:     "",
+		thumbnail:  "",
+		paginator:  "",
+		items:      "#main_homepage > div.list_grid_out > ul > li > div.book_avatar > a",
 	}}
 )
 
 const (
-	GoogleDomain = "google.com"
+	GoogleDomain    = "google.com"
+	TruyenQQTDomain = "truyenqqto.com"
 )
 
 type Source struct {
@@ -98,11 +108,12 @@ func Parse(rawURL string) (*Source, error) {
 	domain := strings.TrimPrefix(url.Hostname(), "www.")
 	switch domain {
 	case GoogleDomain:
-		source = GoogleSource
+		source = Google
+	case TruyenQQTDomain:
+		source = TruyenQQT
 	default:
-		return nil, fmt.Errorf("the %s domain is not supported", domain)
+		return nil, fmt.Errorf("the '%s' domain is not supported", domain)
 	}
-	mail.ParseAddress()
 
 	return source, nil
 }
