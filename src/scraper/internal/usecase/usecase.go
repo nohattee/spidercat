@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 )
 
 type UseCase struct {
-	cc           *colly.Collector
 	tagRepo      tag.Repository
 	categoryRepo category.Repository
 	authorRepo   author.Repository
@@ -25,7 +25,6 @@ type UseCase struct {
 
 func New(itemRepo item.Repository, categoryRepo category.Repository, authorRepo author.Repository, tagRepo tag.Repository) *UseCase {
 	return &UseCase{
-		cc:           cc,
 		itemRepo:     itemRepo,
 		categoryRepo: categoryRepo,
 		authorRepo:   authorRepo,
@@ -49,9 +48,14 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 			colly.Debugger(&debug.LogDebugger{}),
 		)
 
-		c.Limit(&colly.LimitRule{
-			RandomDelay: 5 * time.Second,
+		err := c.Limit(&colly.LimitRule{
+			DomainGlob: "*",
+			Delay:      5 * time.Second,
 		})
+		if err != nil {
+			return fmt.Errorf("cannot set delay collector: %v", err)
+		}
+
 		itemCollector := c.Clone()
 
 		c.OnHTML(parser.Items(), func(e *colly.HTMLElement) {
@@ -62,9 +66,7 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 			}
 		})
 
-		itemCollector.OnHTML(parser.Item(), func(e *colly.HTMLElement) {
-			var err error
-
+		itemCollector.OnHTML("body", func(e *colly.HTMLElement) {
 			tagNames := e.ChildTexts(parser.Tags())
 			tags, err := uc.tagRepo.GetOrCreateByNames(ctx, tagNames)
 			if err != nil {
