@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"time"
 
 	"github.com/nohattee/spidercat/src/scraper/internal/domain/author"
 	"github.com/nohattee/spidercat/src/scraper/internal/domain/category"
@@ -12,9 +12,11 @@ import (
 	"github.com/nohattee/spidercat/src/scraper/internal/domain/tag"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/gocolly/colly/v2/debug"
 )
 
 type UseCase struct {
+	cc           *colly.Collector
 	tagRepo      tag.Repository
 	categoryRepo category.Repository
 	authorRepo   author.Repository
@@ -23,6 +25,7 @@ type UseCase struct {
 
 func New(itemRepo item.Repository, categoryRepo category.Repository, authorRepo author.Repository, tagRepo tag.Repository) *UseCase {
 	return &UseCase{
+		cc:           cc,
 		itemRepo:     itemRepo,
 		categoryRepo: categoryRepo,
 		authorRepo:   authorRepo,
@@ -31,20 +34,24 @@ func New(itemRepo item.Repository, categoryRepo category.Repository, authorRepo 
 }
 
 func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
-	mapSourceByURL := map[string]*source.Source{}
+	mapURLsBySource := map[*source.Source][]string{}
 	for _, url := range urls {
 		s, err := source.Parse(url)
 		if err != nil {
 			return err
 		}
-		mapSourceByURL[url] = s
+		mapURLsBySource[s] = append(mapURLsBySource[s], url)
 	}
 
-	for _, url := range urls {
-		s := mapSourceByURL[url]
+	for s, urls := range mapURLsBySource {
 		parser := s.HTMLParser()
+		c := colly.NewCollector(
+			colly.Debugger(&debug.LogDebugger{}),
+		)
 
-		c := colly.NewCollector()
+		c.Limit(&colly.LimitRule{
+			RandomDelay: 5 * time.Second,
+		})
 		itemCollector := c.Clone()
 
 		c.OnHTML(parser.Items(), func(e *colly.HTMLElement) {
@@ -53,7 +60,6 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 			if err != nil {
 				log.Println(err)
 			}
-			panic("asd")
 		})
 
 		itemCollector.OnHTML(parser.Item(), func(e *colly.HTMLElement) {
@@ -92,10 +98,10 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 		// 	link := e.Attr("href")
 		// 	e.Request.Visit(link)
 		// })
-		c.OnRequest(func(r *colly.Request) {
-			fmt.Println("Visiting", r.URL.String())
-		})
-		c.Visit(url)
+
+		for _, url := range urls {
+			c.Visit(url)
+		}
 	}
 
 	return nil
