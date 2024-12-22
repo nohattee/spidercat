@@ -1,29 +1,28 @@
-package domain
+package item
+
+import "github.com/nohattee/spidercat/src/gopkg/ulid"
 
 type Item struct {
 	id         string
 	name       string
 	externalID string
-	thumbnail  string
-	url        string
-	authors    []Author
-	categories []Category
-	tags       []Tag
-	images     []Image
 }
 
-type Image struct {
-	path string
+func New(externalID, name string) *Item {
+	return &Item{
+		id:   ulid.New(),
+		name: name,
+	}
 }
 
-type Category struct {
-	id string
+func (i *Item) ID() string {
+	return i.id
 }
 
-type Tag struct {
-	id string
+func (i *Item) Name() string {
+	return i.name
 }
 
-type Author struct {
-	id string
+func (i *Item) ExternalID() string {
+	return i.externalID
 }
