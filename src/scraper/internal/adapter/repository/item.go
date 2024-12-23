@@ -28,19 +28,41 @@ type itemModel struct {
 	UpdatedAt  time.Time
 }
 
+func (itemModel) TableName() string {
+	return "item"
+}
+
 type itemAuthorModel struct {
-	ItemID   string
-	AuthorID string
+	ItemID    string
+	AuthorID  string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (itemAuthorModel) TableName() string {
+	return "item_author"
 }
 
 type itemTagModel struct {
-	ItemID string
-	TagID  string
+	ItemID    string
+	TagID     string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (itemTagModel) TableName() string {
+	return "item_tag"
 }
 
 type itemCategoryModel struct {
 	ItemID     string
 	CategoryID string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
+func (itemCategoryModel) TableName() string {
+	return "item_category"
 }
 
 func (repo *ItemRepository) UpsertByExternalID(ctx context.Context, item *item.Aggregate) error {
@@ -51,11 +73,12 @@ func (repo *ItemRepository) UpsertByExternalID(ctx context.Context, item *item.A
 			ID:         item.ID(),
 			Name:       item.Name(),
 			ExternalID: item.ExternalID(),
+			CreatedAt:  now,
 			UpdatedAt:  now,
 		}
 		result := tx.Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "external_id"}},
-			DoUpdates: clause.AssignmentColumns([]string{"name"}),
+			DoUpdates: clause.AssignmentColumns([]string{"name", "updated_at"}),
 		}).Create(&im)
 		if result.Error != nil {
 			return result.Error
@@ -65,8 +88,10 @@ func (repo *ItemRepository) UpsertByExternalID(ctx context.Context, item *item.A
 		for i := range item.Authors() {
 			author := item.Authors()[i]
 			itemAuthors[i] = itemAuthorModel{
-				ItemID:   im.ID,
-				AuthorID: author.ID(),
+				ItemID:    im.ID,
+				AuthorID:  author.ID(),
+				CreatedAt: now,
+				UpdatedAt: now,
 			}
 		}
 
@@ -82,13 +107,15 @@ func (repo *ItemRepository) UpsertByExternalID(ctx context.Context, item *item.A
 		for i := range item.Tags() {
 			author := item.Tags()[i]
 			itemTags[i] = itemTagModel{
-				ItemID: im.ID,
-				TagID:  author.ID(),
+				ItemID:    im.ID,
+				TagID:     author.ID(),
+				CreatedAt: now,
+				UpdatedAt: now,
 			}
 		}
 
 		result = tx.Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "item_id"}, {Name: "author_id"}},
+			Columns:   []clause.Column{{Name: "item_id"}, {Name: "tag_id"}},
 			DoNothing: true,
 		}).CreateInBatches(itemTags, 100)
 		if result.Error != nil {
@@ -101,11 +128,13 @@ func (repo *ItemRepository) UpsertByExternalID(ctx context.Context, item *item.A
 			itemCategories[i] = itemCategoryModel{
 				ItemID:     im.ID,
 				CategoryID: author.ID(),
+				CreatedAt:  now,
+				UpdatedAt:  now,
 			}
 		}
 
 		result = tx.Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "item_id"}, {Name: "author_id"}},
+			Columns:   []clause.Column{{Name: "item_id"}, {Name: "category_id"}},
 			DoNothing: true,
 		}).CreateInBatches(itemCategories, 100)
 		if result.Error != nil {

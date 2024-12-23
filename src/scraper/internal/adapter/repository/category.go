@@ -28,12 +28,17 @@ type categoryModel struct {
 	UpdatedAt time.Time
 }
 
+func (categoryModel) TableName() string {
+	return "category"
+}
+
 func (repo *CategoryRepository) GetOrCreateByNames(ctx context.Context, names []string) (category.Categories, error) {
 	categoryModels := make([]categoryModel, len(names))
 	for i := range names {
 		categoryModels[i] = categoryModel{
-			ID:   ulid.New(),
-			Name: names[i],
+			ID:        ulid.New(),
+			Name:      names[i],
+			UpdatedAt: time.Now(),
 		}
 	}
 

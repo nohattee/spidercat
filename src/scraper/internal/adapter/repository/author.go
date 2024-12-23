@@ -28,12 +28,17 @@ type authorModel struct {
 	UpdatedAt time.Time
 }
 
+func (authorModel) TableName() string {
+	return "author"
+}
+
 func (repo *AuthorRepository) GetOrCreateByNames(ctx context.Context, names []string) (author.Authors, error) {
 	authorModels := make([]authorModel, len(names))
 	for i := range names {
 		authorModels[i] = authorModel{
-			ID:   ulid.New(),
-			Name: names[i],
+			ID:        ulid.New(),
+			Name:      names[i],
+			UpdatedAt: time.Now(),
 		}
 	}
 

@@ -10,8 +10,9 @@ type Item struct {
 
 func New(externalID, name string) *Item {
 	return &Item{
-		id:   ulid.New(),
-		name: name,
+		id:         ulid.New(),
+		name:       name,
+		externalID: externalID,
 	}
 }
 

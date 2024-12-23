@@ -28,12 +28,17 @@ type tagModel struct {
 	UpdatedAt time.Time
 }
 
+func (tagModel) TableName() string {
+	return "tag"
+}
+
 func (repo *TagRepository) GetOrCreateByNames(ctx context.Context, names []string) (tag.Tags, error) {
 	tagModels := make([]tagModel, len(names))
 	for i := range names {
 		tagModels[i] = tagModel{
-			ID:   ulid.New(),
-			Name: names[i],
+			ID:        ulid.New(),
+			Name:      names[i],
+			UpdatedAt: time.Now(),
 		}
 	}
 
