@@ -34,8 +34,8 @@ services:
   postgresql:
     container_name: postgresql
     environment:
-      POSTGRES_PASSWORD: spidercat
-      POSTGRES_USER: spidercat
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
     image: postgres:${POSTGRESQL_VERSION}
     expose:
       - 5432
@@ -43,6 +43,15 @@ services:
     volumes:
       - /var/lib/postgresql/data
 
+  spidercat-migration:
+    container_name: spidercat-migration
+    depends_on:
+      - postgresql
+    image: migrate/migrate
+    volumes:
+      - ../migration:/migration
+    command: ["-path", "/migration", "-database",  "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgresql:${POSTGRES_DEFAULT_PORT}/spidercat?sslmode=disable", "up"]
+    
   temporal:
     container_name: temporal
     depends_on:
@@ -51,8 +60,8 @@ services:
     environment:
       - DB=postgres12
       - DB_PORT=5432
-      - POSTGRES_USER=temporal
-      - POSTGRES_PWD=temporal
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PWD=${POSTGRES_PASSWORD}
       - POSTGRES_SEEDS=postgresql
       - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
       - ENABLE_ES=true
