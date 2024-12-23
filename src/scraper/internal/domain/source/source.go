@@ -18,11 +18,11 @@ var (
 		paginator:  "",
 	}}
 	TruyenQQT = &Source{domain: TruyenQQTDomain, htmlParser: &parser{
-		id:         "",
-		name:       "",
-		categories: "",
+		id:         "#book_id",
+		name:       "body > div.content > div.div_middle > div.main_content > div.book_detail > div.book_info > div.book_other > h1",
+		categories: "body > div.content > div.div_middle > div.main_content > div.book_detail > div.book_info > div.book_other > ul.list01 > li > a",
 		tags:       "",
-		authors:    "",
+		authors:    "body > div.content > div.div_middle > div.main_content > div.book_detail > div.book_info > div.book_other > div.txt > ul > li.author.row > p.col-xs-9 > a",
 		images:     "",
 		thumbnail:  "",
 		paginator:  "",
