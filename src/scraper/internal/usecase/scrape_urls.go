@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
-	"github.com/nohattee/spidercat/src/scraper/internal/domain/author"
-	"github.com/nohattee/spidercat/src/scraper/internal/domain/category"
 	"github.com/nohattee/spidercat/src/scraper/internal/domain/item"
 	"github.com/nohattee/spidercat/src/scraper/internal/domain/source"
-	"github.com/nohattee/spidercat/src/scraper/internal/domain/tag"
 
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/debug"
@@ -48,45 +46,26 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 			if err != nil {
 				log.Println(err)
 			}
-			panic("asd")
 		})
 
 		itemCollector.OnHTML("body", func(e *colly.HTMLElement) {
 			var err error
 
-			var tags tag.Tags
-			if parser.Tags() != "" {
-				tagNames := e.ChildTexts(parser.Tags())
-				tags, err = uc.tagRepo.GetOrCreateByNames(ctx, tagNames)
-				if err != nil {
-					log.Printf("cannot get_or_create_by_names tags: %v", err)
-				}
-			}
+			externalID := e.ChildText(parser.ExternalID())
+			title := e.ChildText(parser.Title())
+			description := e.ChildText(parser.Description())
+			thumbnailURL := e.ChildText(parser.ThumbnailURL())
 
-			var categories category.Categories
-			if parser.Categories() != "" {
-				categoryNames := e.ChildTexts(parser.Categories())
-				categories, err = uc.categoryRepo.GetOrCreateByNames(ctx, categoryNames)
-				if err != nil {
-					log.Printf("cannot get_or_create_by_names categories: %v", err)
-				}
-			}
-
-			var authors author.Authors
-			if parser.Authors() != "" {
-				authorNames := e.ChildTexts(parser.Authors())
-				authors, err = uc.authorRepo.GetOrCreateByNames(ctx, authorNames)
-				if err != nil {
-					log.Printf("cannot get_or_create_by_names authors: %v", err)
-				}
-			}
+			tags := strings.Join(e.ChildTexts(parser.Tags()), ",")
+			genres := strings.Join(e.ChildTexts(parser.Genres()), ",")
+			authors := strings.Join(e.ChildTexts(parser.Authors()), ",")
+			chapters := strings.Join(e.ChildTexts(parser.Chapters()), ",")
+			imageURLs := strings.Join(e.ChildTexts(parser.ImageURLs()), ",")
 
 			// TODO: handle images
 
-			externalID := e.ChildText(parser.ID())
-			name := e.ChildText(parser.Name())
-			itemAggregate := item.NewAggregate(item.New(externalID, name), authors, categories, tags)
-			err = uc.itemRepo.UpsertByExternalID(ctx, itemAggregate)
+			item := item.NewScrapedItem(externalID, title, description, thumbnailURL, genres, authors, tags, chapters, imageURLs, s.ID(), e.Request.URL.Path)
+			err = uc.itemRepo.UpsertScrapedItemByExternalID(ctx, item)
 			if err != nil {
 				log.Printf("cannot upsert item: %v", err)
 			}

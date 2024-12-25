@@ -8,26 +8,27 @@ import (
 
 var (
 	Google = &Source{domain: GoogleDomain, htmlParser: &parser{
-		id:         "",
-		name:       "",
-		categories: "",
-		tags:       "",
-		authors:    "",
-		images:     "",
-		thumbnail:  "",
-		paginator:  "",
+		externalID:   "",
+		title:        "",
+		genres:       "",
+		tags:         "",
+		authors:      "",
+		imageURLs:    "",
+		thumbnailURL: "",
+		paginators:   "",
 	}}
-	TruyenQQT = &Source{domain: TruyenQQTDomain, htmlParser: &parser{
-		id:         "#book_id",
-		name:       "body > div.content > div.div_middle > div.main_content > div.book_detail > div.book_info > div.book_other > h1",
-		categories: "body > div.content > div.div_middle > div.main_content > div.book_detail > div.book_info > div.book_other > ul.list01 > li > a",
-		tags:       "",
-		authors:    "body > div.content > div.div_middle > div.main_content > div.book_detail > div.book_info > div.book_other > div.txt > ul > li.author.row > p.col-xs-9 > a",
-		images:     "",
-		thumbnail:  "",
-		paginator:  "",
-		chapters:   "",
-		items:      "#main_homepage > div.list_grid_out > ul > li > div.book_avatar > a",
+	TruyenQQT = &Source{id: "truyenqqto", domain: TruyenQQTDomain, htmlParser: &parser{
+		externalID:   "#book_id",
+		title:        "body > div.content > div.div_middle > div.main_content > div.book_detail > div.book_info > div.book_other > h1",
+		description:  "",
+		genres:       "body > div.content > div.div_middle > div.main_content > div.book_detail > div.book_info > div.book_other > ul.list01 > li > a",
+		tags:         "",
+		authors:      "body > div.content > div.div_middle > div.main_content > div.book_detail > div.book_info > div.book_other > div.txt > ul > li.author.row > p.col-xs-9 > a",
+		imageURLs:    "",
+		thumbnailURL: "",
+		chapters:     "",
+		items:        "#main_homepage > div.list_grid_out > ul > li > div.book_avatar > a",
+		paginators:   "",
 	}}
 )
 
@@ -37,8 +38,13 @@ const (
 )
 
 type Source struct {
+	id         string
 	domain     string
 	htmlParser *parser
+}
+
+func (s *Source) ID() string {
+	return s.id
 }
 
 func (s *Source) HTMLParser() *parser {
@@ -50,33 +56,42 @@ func (s *Source) Domain() string {
 }
 
 type parser struct {
-	id         string
-	name       string
-	categories string
-	tags       string
-	authors    string
-	images     string
-	thumbnail  string
-	paginator  string
-	item       string
+	externalID   string
+	title        string
+	description  string
+	thumbnailURL string
+	genres       string
+	tags         string
+	authors      string
+	imageURLs    string
+	chapters     string
+
+	paginators string
 	items      string
-	chapters   string
 }
 
-func (p *parser) ID() string {
-	return p.id
+func (p *parser) ExternalID() string {
+	return p.externalID
 }
 
-func (p *parser) Name() string {
-	return p.name
+func (p *parser) Title() string {
+	return p.title
 }
 
-func (p *parser) Paginator() string {
-	return p.paginator
+func (p *parser) Description() string {
+	return p.description
 }
 
-func (p *parser) Item() string {
-	return p.item
+func (p *parser) ThumbnailURL() string {
+	return p.thumbnailURL
+}
+
+func (p *parser) ImageURLs() string {
+	return p.imageURLs
+}
+
+func (p *parser) Paginators() string {
+	return p.paginators
 }
 
 func (p *parser) Items() string {
@@ -87,8 +102,8 @@ func (p *parser) Tags() string {
 	return p.tags
 }
 
-func (p *parser) Categories() string {
-	return p.categories
+func (p *parser) Genres() string {
+	return p.genres
 }
 
 func (p *parser) Authors() string {

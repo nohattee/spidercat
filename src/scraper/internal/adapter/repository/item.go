@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/nohattee/spidercat/src/scraper/internal/domain/item"
-
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -20,10 +19,31 @@ func NewItemRepository(db *gorm.DB) *ItemRepository {
 	}
 }
 
+type scrapedItemModel struct {
+	ID           string
+	ExternalID   string
+	Title        string
+	Description  string
+	Genres       string
+	Authors      string
+	Tags         string
+	Chapters     string
+	ImageURLs    string
+	ThumbnailURL string
+	SourceID     string
+	SourceURL    string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+func (scrapedItemModel) TableName() string {
+	return "scraped_item"
+}
+
 type itemModel struct {
 	ID         string
-	Name       string
 	ExternalID string
+	Title      string
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 }
@@ -71,8 +91,8 @@ func (repo *ItemRepository) UpsertByExternalID(ctx context.Context, item *item.A
 	if err := repo.db.Transaction(func(tx *gorm.DB) error {
 		im := itemModel{
 			ID:         item.ID(),
-			Name:       item.Name(),
 			ExternalID: item.ExternalID(),
+			Title:      item.Title(),
 			CreatedAt:  now,
 			UpdatedAt:  now,
 		}
@@ -137,6 +157,42 @@ func (repo *ItemRepository) UpsertByExternalID(ctx context.Context, item *item.A
 			Columns:   []clause.Column{{Name: "item_id"}, {Name: "category_id"}},
 			DoNothing: true,
 		}).CreateInBatches(itemCategories, 100)
+		if result.Error != nil {
+			return result.Error
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *ItemRepository) UpsertScrapedItemByExternalID(ctx context.Context, item *item.ScrapedItem) error {
+	now := time.Now()
+
+	if err := repo.db.Transaction(func(tx *gorm.DB) error {
+		im := scrapedItemModel{
+			ID:           item.ID(),
+			ExternalID:   item.ExternalID(),
+			Title:        item.Title(),
+			Description:  item.Description(),
+			Genres:       item.Genres(),
+			Authors:      item.Authors(),
+			Tags:         item.Tags(),
+			Chapters:     item.Chapters(),
+			ThumbnailURL: item.ThumbnailURL(),
+			SourceID:     item.SourceID(),
+			SourceURL:    item.SourceURL(),
+
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+		result := tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "source_id"}, {Name: "external_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"title", "description", "genres", "authors", "tags", "chapters", "thumbnail_url", "image_urls", "source_url", "updated_at"}),
+		}).Create(&im)
 		if result.Error != nil {
 			return result.Error
 		}

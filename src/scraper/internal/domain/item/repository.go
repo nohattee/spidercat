@@ -1,7 +1,10 @@
 package item
 
-import "context"
+import (
+	"context"
+)
 
 type Repository interface {
+	UpsertScrapedItemByExternalID(context.Context, *ScrapedItem) error
 	UpsertByExternalID(context.Context, *Aggregate) error
 }
