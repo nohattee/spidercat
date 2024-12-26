@@ -51,20 +51,23 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 		itemCollector.OnHTML("body", func(e *colly.HTMLElement) {
 			var err error
 
-			externalID := e.ChildText(parser.ExternalID())
+			externalID := e.ChildAttr(parser.ExternalID(), "data-id")
+			if externalID == "" {
+				externalID = e.ChildAttr(parser.ExternalID(), "value")
+			}
 			title := e.ChildText(parser.Title())
 			description := e.ChildText(parser.Description())
-			thumbnailURL := e.ChildText(parser.ThumbnailURL())
+			thumbnailURL := e.ChildAttr(parser.ThumbnailURL(), "src")
 
 			tags := strings.Join(e.ChildTexts(parser.Tags()), ",")
 			genres := strings.Join(e.ChildTexts(parser.Genres()), ",")
 			authors := strings.Join(e.ChildTexts(parser.Authors()), ",")
-			chapters := strings.Join(e.ChildTexts(parser.Chapters()), ",")
+			chapters := strings.Join(e.ChildAttrs(parser.Chapters(), "href"), ",")
 			imageURLs := strings.Join(e.ChildTexts(parser.ImageURLs()), ",")
 
 			// TODO: handle images
 
-			item := item.NewScrapedItem(externalID, title, description, thumbnailURL, genres, authors, tags, chapters, imageURLs, s.ID(), e.Request.URL.Path)
+			item := item.NewScrapedItem(externalID, title, description, thumbnailURL, genres, authors, tags, chapters, imageURLs, s.ID(), e.Request.URL.String())
 			err = uc.itemRepo.UpsertScrapedItemByExternalID(ctx, item)
 			if err != nil {
 				log.Printf("cannot upsert item: %v", err)

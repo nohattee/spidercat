@@ -14,7 +14,7 @@ type ScrapedItem struct {
 	chapters     string
 	imageURLs    string
 	sourceID     string
-	sourceURL    string
+	url          string
 }
 
 func NewScrapedItem(externalID, tilte, description, thumbnailURL, genres, authors, tags, chapters, imageURLs, sourceID, sourceURL string) *ScrapedItem {
@@ -30,7 +30,7 @@ func NewScrapedItem(externalID, tilte, description, thumbnailURL, genres, author
 		chapters:     chapters,
 		imageURLs:    imageURLs,
 		sourceID:     sourceID,
-		sourceURL:    sourceURL,
+		url:          sourceURL,
 	}
 }
 
@@ -78,6 +78,6 @@ func (i *ScrapedItem) SourceID() string {
 	return i.sourceID
 }
 
-func (i *ScrapedItem) SourceURL() string {
-	return i.sourceURL
+func (i *ScrapedItem) URL() string {
+	return i.url
 }

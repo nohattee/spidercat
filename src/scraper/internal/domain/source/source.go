@@ -20,15 +20,15 @@ var (
 	TruyenQQT = &Source{id: "truyenqqto", domain: TruyenQQTDomain, htmlParser: &parser{
 		externalID:   "#book_id",
 		title:        "body > div.content > div.div_middle > div.main_content > div.book_detail > div.book_info > div.book_other > h1",
-		description:  "",
+		description:  "body > div.content > div.div_middle > div.main_content > div.book_detail > div.story-detail-info.detail-content",
 		genres:       "body > div.content > div.div_middle > div.main_content > div.book_detail > div.book_info > div.book_other > ul.list01 > li > a",
 		tags:         "",
 		authors:      "body > div.content > div.div_middle > div.main_content > div.book_detail > div.book_info > div.book_other > div.txt > ul > li.author.row > p.col-xs-9 > a",
 		imageURLs:    "",
-		thumbnailURL: "",
-		chapters:     "",
+		thumbnailURL: "body > div.content > div.div_middle > div.main_content > div.book_detail > div.book_info > div.book_avatar > img",
+		chapters:     "body > div.content > div.div_middle > div.main_content > div.book_detail > div.list_chapter > div > div > div.col-md-10.col-sm-10.col-xs-8.name-chap > a",
 		items:        "#main_homepage > div.list_grid_out > ul > li > div.book_avatar > a",
-		paginators:   "",
+		paginators:   "#main_homepage > div.page_redirect > a",
 	}}
 )
 
