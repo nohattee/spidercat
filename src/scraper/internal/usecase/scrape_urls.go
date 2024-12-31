@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"strings"
 	"time"
 
@@ -41,14 +42,14 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 		itemCollector := c.Clone()
 		chapterCollector := c.Clone()
 
-		chapterCollector.OnHTML(parser.Items(), func(e *colly.HTMLElement) {
+		chapterCollector.OnHTML("body", func(e *colly.HTMLElement) {
 			imageURLs := strings.Join(e.ChildAttrs(parser.ImageURLs(), "src"), ",")
 			itemID := e.Request.Ctx.Get("itemID")
 			chapterID := e.Request.Ctx.Get("chapterID")
 			chapter := item.NewScrapedItemChapter(itemID, chapterID, e.Request.URL.String(), imageURLs)
 			err = uc.itemRepo.UpsertScrapedItemChapter(ctx, chapter)
 			if err != nil {
-				log.Printf("cannot upsert item: %v", err)
+				log.Printf("cannot upsert item_chapter, err: %v, chapter: %v", err, chapter)
 			}
 		})
 
@@ -92,9 +93,18 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 			if parser.Chapters() != "" {
 				chapterURLs := e.ChildAttrs(parser.Chapters(), "href")
 				e.Response.Ctx.Put("itemID", item.ID())
-				for i, url := range chapterURLs {
-					e.Response.Ctx.Put("chapterID", i+1)
-					err := chapterCollector.Request("GET", url, nil, e.Response.Ctx, nil)
+				for i, chapterURL := range chapterURLs {
+					u, err := url.Parse(chapterURL)
+					if err != nil {
+						log.Printf("cannot parse chapter_url: %v", err)
+						continue
+					}
+					if u.Scheme == "" {
+						chapterURL = fmt.Sprintf("https://%s%s", s.Domain(), chapterURL)
+					}
+
+					e.Response.Ctx.Put("chapterID", fmt.Sprint(i+1))
+					err = chapterCollector.Request("GET", chapterURL, nil, e.Response.Ctx, nil)
 					if err != nil {
 						log.Println(err)
 					}

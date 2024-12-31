@@ -27,8 +27,6 @@ type scrapedItemModel struct {
 	Genres       string
 	Authors      string
 	Tags         string
-	Chapters     string
-	ImageURLs    string
 	ThumbnailURL string
 	SourceID     string
 	ItemURL      string
@@ -204,7 +202,7 @@ func (repo *ItemRepository) UpsertScrapedItemByExternalID(ctx context.Context, i
 		}
 		result := tx.Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "source_id"}, {Name: "external_id"}},
-			DoUpdates: clause.AssignmentColumns([]string{"title", "description", "genres", "authors", "tags", "chapters", "thumbnail_url", "image_urls", "source_item_url", "updated_at"}),
+			DoUpdates: clause.AssignmentColumns([]string{"title", "description", "genres", "authors", "tags", "thumbnail_url", "item_url", "updated_at"}),
 		}).Create(&im)
 		if result.Error != nil {
 			return result.Error
