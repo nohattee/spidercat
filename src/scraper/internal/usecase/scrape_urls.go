@@ -48,6 +48,14 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 			}
 		})
 
+		c.OnHTML(parser.Paginators(), func(e *colly.HTMLElement) {
+			url := e.Request.AbsoluteURL(e.Attr("href"))
+			err := e.Request.Visit(url)
+			if err != nil {
+				log.Println(err)
+			}
+		})
+
 		itemCollector.OnHTML("body", func(e *colly.HTMLElement) {
 			var err error
 
@@ -62,12 +70,10 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 			tags := strings.Join(e.ChildTexts(parser.Tags()), ",")
 			genres := strings.Join(e.ChildTexts(parser.Genres()), ",")
 			authors := strings.Join(e.ChildTexts(parser.Authors()), ",")
-			chapters := strings.Join(e.ChildAttrs(parser.Chapters(), "href"), ",")
-			imageURLs := strings.Join(e.ChildTexts(parser.ImageURLs()), ",")
 
 			// TODO: handle images
 
-			item := item.NewScrapedItem(externalID, title, description, thumbnailURL, genres, authors, tags, chapters, imageURLs, s.ID(), e.Request.URL.String())
+			item := item.NewScrapedItem(externalID, title, description, thumbnailURL, genres, authors, tags, s.ID(), e.Request.URL.String())
 			err = uc.itemRepo.UpsertScrapedItemByExternalID(ctx, item)
 			if err != nil {
 				log.Printf("cannot upsert item: %v", err)

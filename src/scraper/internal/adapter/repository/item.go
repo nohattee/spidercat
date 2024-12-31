@@ -20,20 +20,20 @@ func NewItemRepository(db *gorm.DB) *ItemRepository {
 }
 
 type scrapedItemModel struct {
-	ID            string
-	ExternalID    string
-	Title         string
-	Description   string
-	Genres        string
-	Authors       string
-	Tags          string
-	Chapters      string
-	ImageURLs     string
-	ThumbnailURL  string
-	SourceID      string
-	SourceItemURL string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID           string
+	ExternalID   string
+	Title        string
+	Description  string
+	Genres       string
+	Authors      string
+	Tags         string
+	Chapters     string
+	ImageURLs    string
+	ThumbnailURL string
+	SourceID     string
+	ItemURL      string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 func (scrapedItemModel) TableName() string {
@@ -174,17 +174,17 @@ func (repo *ItemRepository) UpsertScrapedItemByExternalID(ctx context.Context, i
 
 	if err := repo.db.Transaction(func(tx *gorm.DB) error {
 		im := scrapedItemModel{
-			ID:            item.ID(),
-			ExternalID:    item.ExternalID(),
-			Title:         item.Title(),
-			Description:   item.Description(),
-			Genres:        item.Genres(),
-			Authors:       item.Authors(),
-			Tags:          item.Tags(),
-			Chapters:      item.Chapters(),
-			ThumbnailURL:  item.ThumbnailURL(),
-			SourceID:      item.SourceID(),
-			SourceItemURL: item.URL(),
+			ID:           item.ID(),
+			ExternalID:   item.ExternalID(),
+			Title:        item.Title(),
+			Description:  item.Description(),
+			Genres:       item.Genres(),
+			Authors:      item.Authors(),
+			Tags:         item.Tags(),
+			Chapters:     item.Chapters(),
+			ThumbnailURL: item.ThumbnailURL(),
+			SourceID:     item.SourceID(),
+			ItemURL:      item.URL(),
 
 			CreatedAt: now,
 			UpdatedAt: now,

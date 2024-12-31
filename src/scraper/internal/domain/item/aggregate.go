@@ -14,6 +14,18 @@ type Aggregate struct {
 	images     Images
 }
 
+type ScrapedItemAggregate struct {
+	*ScrapedItem
+	chapters ScrapedItemChapters
+}
+
+func NewScrapedItemAggregate(item *ScrapedItem, chapters ScrapedItemChapters) *ScrapedItemAggregate {
+	return &ScrapedItemAggregate{
+		ScrapedItem: item,
+		chapters:    chapters,
+	}
+}
+
 func NewAggregate(item *Item, authors author.Authors, categories category.Categories, tags tag.Tags) *Aggregate {
 	return &Aggregate{
 		Item:       item,
