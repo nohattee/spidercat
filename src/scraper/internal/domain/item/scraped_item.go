@@ -15,16 +15,6 @@ type ScrapedItem struct {
 	url          string
 }
 
-type ScrapedItemChapters []*ScrapedItemChapter
-
-type ScrapedItemChapter struct {
-	id         string
-	itemID     string
-	chapterID  string
-	chapterURL string
-	imageURLs  string
-}
-
 func NewScrapedItem(externalID, tilte, description, thumbnailURL, genres, authors, tags, sourceID, itemURL string) *ScrapedItem {
 	return &ScrapedItem{
 		id:           ulid.New(),
@@ -70,14 +60,6 @@ func (i *ScrapedItem) Authors() string {
 
 func (i *ScrapedItem) Tags() string {
 	return i.tags
-}
-
-func (i *ScrapedItem) Chapters() string {
-	return i.chapters
-}
-
-func (i *ScrapedItem) ImageURLs() string {
-	return i.imageURLs
 }
 
 func (i *ScrapedItem) SourceID() string {

@@ -39,6 +39,18 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 		}
 
 		itemCollector := c.Clone()
+		chapterCollector := c.Clone()
+
+		chapterCollector.OnHTML(parser.Items(), func(e *colly.HTMLElement) {
+			imageURLs := strings.Join(e.ChildAttrs(parser.ImageURLs(), "src"), ",")
+			itemID := e.Request.Ctx.Get("itemID")
+			chapterID := e.Request.Ctx.Get("chapterID")
+			chapter := item.NewScrapedItemChapter(itemID, chapterID, e.Request.URL.String(), imageURLs)
+			err = uc.itemRepo.UpsertScrapedItemChapter(ctx, chapter)
+			if err != nil {
+				log.Printf("cannot upsert item: %v", err)
+			}
+		})
 
 		c.OnHTML(parser.Items(), func(e *colly.HTMLElement) {
 			itemURL := e.Request.AbsoluteURL(e.Attr("href"))
@@ -71,12 +83,22 @@ func (uc *UseCase) ScrapeURLs(ctx context.Context, urls []string) error {
 			genres := strings.Join(e.ChildTexts(parser.Genres()), ",")
 			authors := strings.Join(e.ChildTexts(parser.Authors()), ",")
 
-			// TODO: handle images
-
 			item := item.NewScrapedItem(externalID, title, description, thumbnailURL, genres, authors, tags, s.ID(), e.Request.URL.String())
 			err = uc.itemRepo.UpsertScrapedItemByExternalID(ctx, item)
 			if err != nil {
 				log.Printf("cannot upsert item: %v", err)
+			}
+
+			if parser.Chapters() != "" {
+				chapterURLs := e.ChildAttrs(parser.Chapters(), "href")
+				e.Response.Ctx.Put("itemID", item.ID())
+				for i, url := range chapterURLs {
+					e.Response.Ctx.Put("chapterID", i+1)
+					err := chapterCollector.Request("GET", url, nil, e.Response.Ctx, nil)
+					if err != nil {
+						log.Println(err)
+					}
+				}
 			}
 		})
 

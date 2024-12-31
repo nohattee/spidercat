@@ -19,10 +19,10 @@ CREATE TABLE IF NOT EXISTS scraped_item_chapter (
     id TEXT PRIMARY KEY,
     item_id TEXT NOT NULL,
     chapter_id TEXT,
-    image_urls TEXT,
     chapter_url TEXT,
+    image_urls TEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT TIMEZONE('UTC'::TEXT, NOW()),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT TIMEZONE('UTC'::TEXT, NOW()),
 
-    CONSTRAINT item__item_id_chapter_url__unique UNIQUE (item_id, chapter_id)
+    CONSTRAINT item__item_id_chapter_id__unique UNIQUE (item_id, chapter_id)
 );

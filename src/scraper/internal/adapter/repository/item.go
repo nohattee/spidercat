@@ -40,6 +40,20 @@ func (scrapedItemModel) TableName() string {
 	return "scraped_item"
 }
 
+type scrapedItemChapterModel struct {
+	ID         string
+	ItemID     string
+	ChapterID  string
+	ChapterURL string
+	ImageURLs  string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
+func (scrapedItemChapterModel) TableName() string {
+	return "scraped_item_chapter"
+}
+
 type itemModel struct {
 	ID         string
 	ExternalID string
@@ -181,7 +195,6 @@ func (repo *ItemRepository) UpsertScrapedItemByExternalID(ctx context.Context, i
 			Genres:       item.Genres(),
 			Authors:      item.Authors(),
 			Tags:         item.Tags(),
-			Chapters:     item.Chapters(),
 			ThumbnailURL: item.ThumbnailURL(),
 			SourceID:     item.SourceID(),
 			ItemURL:      item.URL(),
@@ -192,6 +205,36 @@ func (repo *ItemRepository) UpsertScrapedItemByExternalID(ctx context.Context, i
 		result := tx.Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "source_id"}, {Name: "external_id"}},
 			DoUpdates: clause.AssignmentColumns([]string{"title", "description", "genres", "authors", "tags", "chapters", "thumbnail_url", "image_urls", "source_item_url", "updated_at"}),
+		}).Create(&im)
+		if result.Error != nil {
+			return result.Error
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *ItemRepository) UpsertScrapedItemChapter(ctx context.Context, chapter *item.ScrapedItemChapter) error {
+	now := time.Now()
+
+	if err := repo.db.Transaction(func(tx *gorm.DB) error {
+		im := scrapedItemChapterModel{
+			ID:         chapter.ID(),
+			ItemID:     chapter.ItemID(),
+			ChapterID:  chapter.ChapterID(),
+			ChapterURL: chapter.URL(),
+			ImageURLs:  chapter.ImageURLs(),
+
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+		result := tx.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "item_id"}, {Name: "chapter_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"chapter_url", "image_urls", "updated_at"}),
 		}).Create(&im)
 		if result.Error != nil {
 			return result.Error
